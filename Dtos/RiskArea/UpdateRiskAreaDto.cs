@@ -1,20 +1,11 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace GeoGuardian.Dtos.RiskArea;
-
-/// <summary>
-/// Dados enviados para atualizar uma Área de Risco existente.
-/// </summary>
-public class UpdateRiskAreaDto
+namespace GeoGuardian.Dtos.RiskArea
 {
-    /// <summary>
-    /// Novo nome da Área de Risco (ex.: “Serra Alta”).
-    /// </summary>
-    [Required]
-    public string Name { get; set; } = null!;
-
-    /// <summary>
-    /// ID de um possível novo Tipo de Área de Risco (opcional).
-    /// </summary>
-    public int? RiskAreaTypeId { get; set; }
+    public class UpdateRiskAreaDto
+    {
+        [Required] public string Name { get; set; } = null!;
+        public int? RiskAreaTypeId { get; set; }
+        public int? CityId { get; set; } // ← também pode mudar a cidade se quiser
+    }
 }

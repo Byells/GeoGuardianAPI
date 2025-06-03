@@ -8,4 +8,5 @@ public class City
 
     public State? State { get; set; }
     public ICollection<Neighbourhood> Neighbourhoods { get; set; } = [];
+    public ICollection<RiskArea> RiskAreas { get; set; } = [];
 }

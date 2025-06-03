@@ -9,7 +9,14 @@ namespace GeoGuardian.Controllers;
 public class SensorController : ControllerBase
 {
     private readonly ISensorService _service;
-    public SensorController(ISensorService service) => _service = service;
+    private readonly IUserService _userService;
+
+    public SensorController(ISensorService service, IUserService userService)
+    {
+        _service = service;
+        _userService = userService;
+    }
+
 
     [HttpGet]
     public async Task<ActionResult<IEnumerable<SensorDto>>> Get() =>
@@ -23,24 +30,36 @@ public class SensorController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<ActionResult<SensorDto>> Post([FromBody] CreateSensorDto dto)
+    [Route("admin/{userId:int}")]
+    public async Task<ActionResult<SensorDto>> Post(int userId, [FromBody] CreateSensorDto dto)
     {
+        if (!await _userService.IsAdminAsync(userId))
+            return Unauthorized("User is not authorized.");
+
         if (!ModelState.IsValid) return BadRequest(ModelState);
+
         var created = await _service.CreateAsync(dto);
         return CreatedAtAction(nameof(Get), new { id = created.Id }, created);
     }
 
-    [HttpPut("{id:int}")]
-    public async Task<IActionResult> Put(int id, [FromBody] UpdateSensorDto dto)
+
+    [HttpPut("admin/{userId:int}/{id:int}")]
+    public async Task<IActionResult> Put(int userId, int id, [FromBody] UpdateSensorDto dto)
     {
+        if (!await _userService.IsAdminAsync(userId))
+            return Unauthorized("User is not authorized.");
+
         if (!ModelState.IsValid) return BadRequest(ModelState);
         var ok = await _service.UpdateAsync(id, dto);
         return ok ? NoContent() : NotFound();
     }
 
-    [HttpDelete("{id:int}")]
-    public async Task<IActionResult> Delete(int id)
+    [HttpDelete("admin/{userId:int}/{id:int}")]
+    public async Task<IActionResult> Delete(int userId, int id)
     {
+        if (!await _userService.IsAdminAsync(userId))
+            return Unauthorized("User is not authorized.");
+
         var ok = await _service.DeleteAsync(id);
         return ok ? NoContent() : NotFound();
     }

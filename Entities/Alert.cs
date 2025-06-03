@@ -9,5 +9,7 @@ public class Alert
     public int RiskAreaId   { get; set; }               
     
     public RiskArea? RiskArea { get; set; }
+    public AlertType? AlertType { get; set; } 
+
     public ICollection<UserAlert> UserAlerts { get; set; } = [];
 }

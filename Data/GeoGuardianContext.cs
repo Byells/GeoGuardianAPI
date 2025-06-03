@@ -14,35 +14,30 @@ namespace GeoGuardian.Data
         {
         }
 
-        // ——— DbSets para todas as entidades efetivamente usadas ———
-        public DbSet<User>          Users          => Set<User>();
-        public DbSet<UserType>      UserTypes      => Set<UserType>();
+        public DbSet<User> Users => Set<User>();
+        public DbSet<UserType> UserTypes => Set<UserType>();
 
-        public DbSet<Address>       Addresses      => Set<Address>();
-        public DbSet<Country>       Countries      => Set<Country>();
-        public DbSet<State>         States         => Set<State>();
-        public DbSet<City>          Cities         => Set<City>();
-        public DbSet<Neighbourhood> Neighbourhoods => Set<Neighbourhood>();
-        public DbSet<Street>        Streets        => Set<Street>();
+        public DbSet<Address> Addresses => Set<Address>();
+        public DbSet<Country> Countries => Set<Country>();
+        public DbSet<State> States => Set<State>();
+        public DbSet<City> Cities => Set<City>();
 
-        public DbSet<RiskAreaType>  RiskAreaTypes  => Set<RiskAreaType>();
-        public DbSet<RiskArea>      RiskAreas      => Set<RiskArea>();
+        public DbSet<RiskAreaType> RiskAreaTypes => Set<RiskAreaType>();
+        public DbSet<RiskArea> RiskAreas => Set<RiskArea>();
 
-        public DbSet<SensorModel>   SensorModels   => Set<SensorModel>();
-        public DbSet<Sensor>        Sensors        => Set<Sensor>();
+        public DbSet<SensorModel> SensorModels => Set<SensorModel>();
+        public DbSet<Sensor> Sensors => Set<Sensor>();
         public DbSet<SensorReading> SensorReadings => Set<SensorReading>();
 
-        public DbSet<AlertType>     AlertTypes     => Set<AlertType>();
-        public DbSet<Alert>         Alerts         => Set<Alert>();
-        public DbSet<UserAlert>     UserAlerts     => Set<UserAlert>();
+        public DbSet<AlertType> AlertTypes => Set<AlertType>();
+        public DbSet<Alert> Alerts => Set<Alert>();
+        public DbSet<UserAlert> UserAlerts => Set<UserAlert>();
 
         protected override void OnModelCreating(ModelBuilder mb)
         {
-            // ——— Chave composta de UserAlert ———
             mb.Entity<UserAlert>()
                 .HasKey(ua => new { ua.UserId, ua.AlertId });
 
-            // ——— Configuração de conversão/precision de colunas ———
             mb.Entity<UserAlert>()
                 .Property(ua => ua.ConfirmedReception)
                 .HasConversion<int>()
@@ -60,87 +55,85 @@ namespace GeoGuardian.Data
                 .Property(sr => sr.Value)
                 .HasPrecision(18, 3);
 
-            // ——— Relacionamentos ———
+            mb.Entity<Sensor>()
+                .Property(s => s.Uuid)
+                .HasMaxLength(36)
+                .IsRequired();
 
-            // UserType 1-N User
+            mb.Entity<Address>()
+                .HasOne<Country>()
+                .WithMany()
+                .HasForeignKey(a => a.CountryId);
+
+            mb.Entity<Address>()
+                .HasOne<State>()
+                .WithMany()
+                .HasForeignKey(a => a.StateId);
+
+            mb.Entity<Address>()
+                .HasOne<City>()
+                .WithMany()
+                .HasForeignKey(a => a.CityId);
+
             mb.Entity<UserType>()
                 .HasMany(ut => ut.Users)
                 .WithOne(u => u.UserType)
                 .HasForeignKey(u => u.UserTypeId);
 
-            // User 1-N Address
             mb.Entity<User>()
                 .HasMany(u => u.Addresses)
                 .WithOne(a => a.User)
                 .HasForeignKey(a => a.UserId);
+            
+            mb.Entity<User>()
+                .Property(u => u.UserId)
+                .ValueGeneratedOnAdd();
 
-            // Country 1-N State
             mb.Entity<Country>()
                 .HasMany(c => c.States)
                 .WithOne(s => s.Country)
                 .HasForeignKey(s => s.CountryId);
 
-            // State 1-N City
             mb.Entity<State>()
                 .HasMany(s => s.Cities)
                 .WithOne(c => c.State)
                 .HasForeignKey(c => c.StateId);
 
-            // City 1-N Neighbourhood
-            mb.Entity<City>()
-                .HasMany(c => c.Neighbourhoods)
-                .WithOne(n => n.City)
-                .HasForeignKey(n => n.CityId);
-
-            // Neighbourhood 1-N Street
-            mb.Entity<Neighbourhood>()
-                .HasMany(n => n.Streets)
-                .WithOne(s => s.Neighbourhood)
-                .HasForeignKey(s => s.NeighbourhoodId);
-
-            // Street 1-N RiskArea
-            mb.Entity<Street>()
-                .HasMany(s => s.RiskAreas)
-                .WithOne(r => r.Street)
-                .HasForeignKey(r => r.StreetId);
-
-            // RiskAreaType 1-N RiskArea
             mb.Entity<RiskAreaType>()
                 .HasMany(rt => rt.RiskAreas)
                 .WithOne(r => r.RiskAreaType)
                 .HasForeignKey(r => r.RiskAreaTypeId);
 
-            // RiskArea 1-N Sensor
+            mb.Entity<City>()
+                .HasMany(c => c.RiskAreas)
+                .WithOne(r => r.City)
+                .HasForeignKey(r => r.CityId);
+
             mb.Entity<RiskArea>()
                 .HasMany(r => r.Sensors)
                 .WithOne(s => s.RiskArea)
                 .HasForeignKey(s => s.RiskAreaId);
 
-            // SensorModel 1-N Sensor
             mb.Entity<SensorModel>()
                 .HasMany(sm => sm.Sensors)
                 .WithOne(s => s.SensorModel)
                 .HasForeignKey(s => s.SensorModelId);
 
-            // Sensor 1-N SensorReading
             mb.Entity<Sensor>()
                 .HasMany(s => s.Readings)
                 .WithOne(r => r.Sensor)
                 .HasForeignKey(r => r.SensorId);
 
-            // AlertType 1-N Alert
             mb.Entity<AlertType>()
                 .HasMany(at => at.Alerts)
                 .WithOne(a => a.AlertType)
                 .HasForeignKey(a => a.AlertTypeId);
 
-            // RiskArea 1-N Alert
             mb.Entity<RiskArea>()
                 .HasMany(r => r.Alerts)
                 .WithOne(a => a.RiskArea)
                 .HasForeignKey(a => a.RiskAreaId);
 
-            // UserAlert N-N
             mb.Entity<UserAlert>()
                 .HasOne(ua => ua.User)
                 .WithMany(u => u.UserAlerts)
@@ -151,12 +144,10 @@ namespace GeoGuardian.Data
                 .WithMany(a => a.UserAlerts)
                 .HasForeignKey(ua => ua.AlertId);
 
-            // ——— Seed data (se existir) ———
             SeedData.Configure(mb);
         }
     }
 
-    // ——— Factory para dotnet-ef ———
     public class GeoGuardianDesignTimeContextFactory : IDesignTimeDbContextFactory<GeoGuardianContext>
     {
         public GeoGuardianContext CreateDbContext(string[] args)

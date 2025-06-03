@@ -1,5 +1,4 @@
-﻿
-using GeoGuardian.Data;
+﻿using GeoGuardian.Data;
 using GeoGuardian.Dtos.Alert;
 using GeoGuardian.Entities;
 using GeoGuardian.Interfaces;
@@ -20,18 +19,24 @@ public class AlertService : IAlertService
 
     public async Task<AlertDto> CreateAsync(CreateAlertDto dto)
     {
-        bool areaOk = await _ctx.RiskAreas.AnyAsync(r => r.Id == dto.RiskAreaId);
-        bool typeOk = await _ctx.Set<AlertType>()
-                                .AnyAsync(t => t.AlertTypeId == dto.AlertTypeId);
-        if (!areaOk || !typeOk) throw new ArgumentException("Invalid IDs");
+        bool riskAreaExists = await _ctx.RiskAreas.CountAsync(r => r.Id == dto.RiskAreaId) > 0;
+        bool typeExists = await _ctx.AlertTypes
+            .Where(t => t.AlertTypeId == dto.AlertTypeId)
+            .Select(_ => 1)
+            .FirstOrDefaultAsync() > 0;
+
+
+        if (!riskAreaExists || !typeExists)
+            throw new ArgumentException("Invalid RiskAreaId or AlertTypeId");
 
         var entity = new Alert
         {
             RiskLevel   = dto.RiskLevel,
             Date        = dto.Date ?? DateTime.UtcNow,
-            AlertTypeId = dto.AlertTypeId,   
+            AlertTypeId = dto.AlertTypeId,
             RiskAreaId  = dto.RiskAreaId
         };
+
         _ctx.Alerts.Add(entity);
         await _ctx.SaveChangesAsync();
         return ToDto(entity);
@@ -43,7 +48,8 @@ public class AlertService : IAlertService
         if (entity is null) return false;
 
         entity.RiskLevel   = dto.RiskLevel;
-        entity.AlertTypeId = dto.AlertTypeId;   
+        entity.AlertTypeId = dto.AlertTypeId;
+
         await _ctx.SaveChangesAsync();
         return true;
     }
@@ -63,7 +69,7 @@ public class AlertService : IAlertService
         Id          = a.Id,
         RiskLevel   = a.RiskLevel,
         Date        = a.Date,
-        AlertTypeId = a.AlertTypeId,   
+        AlertTypeId = a.AlertTypeId,
         RiskAreaId  = a.RiskAreaId
     };
 }

@@ -12,6 +12,17 @@ public class UserService : IUserService
 {
     private readonly GeoGuardianContext _ctx;
     public UserService(GeoGuardianContext ctx) => _ctx = ctx;
+    
+    public async Task<bool> IsAdminAsync(int userId)
+    {
+        var user = await _ctx.Users
+            .Include(u => u.UserType)
+            .FirstOrDefaultAsync(u => u.UserId == userId);
+
+        return user?.UserType?.Name.ToUpper() == "ADMIN";
+    }
+
+
 
     public async Task<IEnumerable<UserDto>> GetAllAsync()
     {

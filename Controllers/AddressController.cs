@@ -1,47 +1,46 @@
 ﻿using GeoGuardian.Dtos.Address;
 using GeoGuardian.Interfaces;
+using GeoGuardian.Services;
 using Microsoft.AspNetCore.Mvc;
 
 namespace GeoGuardian.Controllers;
 
 [ApiController]
-[Route("api/users/{userId:int}/[controller]")]
+[Route("api/users/{userId}/addresses")]
 public class AddressController : ControllerBase
 {
-    private readonly IAddressService _svc;
-    public AddressController(IAddressService svc) => _svc = svc;
+    private readonly IAddressService _service;
+
+    public AddressController(IAddressService service)
+    {
+        _service = service;
+    }
+
 
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<AddressDto>>> Get(int userId) =>
-        Ok(await _svc.GetAllAsync(userId));
-
-    [HttpGet("{id:int}")]
-    public async Task<ActionResult<AddressDto>> GetById(int userId, int id)
+    public async Task<ActionResult<IEnumerable<AddressDto>>> GetAll(int userId)
     {
-        var dto = await _svc.GetByIdAsync(userId, id);
-        return dto is null ? NotFound() : Ok(dto);
+        return Ok(await _service.GetAllAsync(userId));
     }
 
     [HttpPost]
-    public async Task<ActionResult<AddressDto>> Post(int userId, [FromBody] CreateAddressDto dto)
+    public async Task<ActionResult<AddressDto>> Post(int userId, CreateAddressDto dto)
     {
-        if (!ModelState.IsValid) return BadRequest(ModelState);
-        var created = await _svc.CreateAsync(userId, dto);
-        return CreatedAtAction(nameof(GetById), new { userId, id = created.AddressId }, created);
+        var created = await _service.CreateAsync(userId, dto);
+        return CreatedAtAction(nameof(GetAll), new { userId }, created);
     }
 
-    [HttpPut("{id:int}")]
-    public async Task<IActionResult> Put(int userId, int id, [FromBody] UpdateAddressDto dto)
+    [HttpPut("{addressId}")]
+    public async Task<IActionResult> Put(int userId, int addressId, UpdateAddressDto dto)
     {
-        if (!ModelState.IsValid) return BadRequest(ModelState);
-        var ok = await _svc.UpdateAsync(userId, id, dto);
-        return ok ? NoContent() : NotFound();
+        await _service.UpdateAsync(userId, addressId, dto);
+        return NoContent();
     }
 
-    [HttpDelete("{id:int}")]
-    public async Task<IActionResult> Delete(int userId, int id)
+    [HttpDelete("{addressId}")]
+    public async Task<IActionResult> Delete(int userId, int addressId)
     {
-        var ok = await _svc.DeleteAsync(userId, id);
-        return ok ? NoContent() : NotFound();
+        await _service.DeleteAsync(userId, addressId);
+        return NoContent();
     }
 }

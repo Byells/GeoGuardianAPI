@@ -26,8 +26,16 @@ public class SensorService : ISensorService
 
     public async Task<SensorDto> CreateAsync(CreateSensorDto dto)
     {
-        bool areaExists = await _ctx.RiskAreas.AnyAsync(r => r.Id == dto.RiskAreaId);
-        bool modelExists = await _ctx.SensorModels.AnyAsync(m => m.SensorModelId == dto.SensorModelId);
+        var areaExists = await _ctx.RiskAreas
+            .Where(r => r.Id == dto.RiskAreaId)
+            .Select(_ => 1)
+            .FirstOrDefaultAsync() > 0;
+
+        var modelExists = await _ctx.SensorModels
+            .Where(m => m.SensorModelId == dto.SensorModelId)
+            .Select(_ => 1)
+            .FirstOrDefaultAsync() > 0;
+
         if (!areaExists || !modelExists)
             throw new ArgumentException("RiskAreaId ou SensorModelId inválido");
 
@@ -36,7 +44,7 @@ public class SensorService : ISensorService
         var entity = new Sensor
         {
             Uuid          = newUuid,
-            Status        = dto.Status ?? "ACTIVE",
+            Status = string.IsNullOrWhiteSpace(dto.Status) ? "ACTIVE" : dto.Status.ToUpper(),
             RiskAreaId    = dto.RiskAreaId,
             SensorModelId = dto.SensorModelId
         };
@@ -52,7 +60,9 @@ public class SensorService : ISensorService
         if (entity is null) return false;
 
         entity.Status        = dto.Status;
-        entity.SensorModelId = dto.SensorModelId;
+        if (dto.SensorModelId.HasValue)
+            entity.SensorModelId = dto.SensorModelId.Value;
+
 
         await _ctx.SaveChangesAsync();
         return true;

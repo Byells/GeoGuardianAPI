@@ -4,71 +4,85 @@ using GeoGuardian.Entities;
 using GeoGuardian.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
-namespace GeoGuardian.Services;
-
-public class RiskAreaService : IRiskAreaService
+namespace GeoGuardian.Services
 {
-    private readonly GeoGuardianContext _context;
-
-    public RiskAreaService(GeoGuardianContext context)
+    public class RiskAreaService : IRiskAreaService
     {
-        _context = context;
-    }
+        private readonly GeoGuardianContext _context;
 
-    public async Task<IEnumerable<RiskAreaDto>> GetAllAsync()
-    {
-        var list = await _context.RiskAreas.AsNoTracking().ToListAsync();
-        return list.Select(ToDto);
-    }
-
-    public async Task<RiskAreaDto?> GetByIdAsync(int id)
-    {
-        var entity = await _context.RiskAreas.FindAsync(id);
-        return entity is null ? null : ToDto(entity);
-    }
-
-    public async Task<RiskAreaDto> CreateAsync(CreateRiskAreaDto dto)
-    {
-        var entity = new RiskArea
+        public RiskAreaService(GeoGuardianContext context)
         {
-            Name           = dto.Name,
-            RiskAreaTypeId = dto.RiskAreaTypeId,
-            StreetId       = dto.StreetId
+            _context = context;
+        }
+
+        public async Task<IEnumerable<RiskAreaDto>> GetAllAsync()
+        {
+            var list = await _context.RiskAreas
+                                     .AsNoTracking()
+                                     .ToListAsync();
+            return list.Select(ToDto);
+        }
+
+        public async Task<RiskAreaDto?> GetByIdAsync(int id)
+        {
+            var entity = await _context.RiskAreas.FindAsync(id);
+            return entity is null ? null : ToDto(entity);
+        }
+
+        public async Task<RiskAreaDto> CreateAsync(CreateRiskAreaDto dto)
+        {
+            var typeExists = await _context.RiskAreaTypes
+                .CountAsync(rt => rt.RiskAreaTypeId == dto.RiskAreaTypeId) > 0;
+
+            var cityExists = await _context.Cities
+                .CountAsync(c => c.CityId == dto.CityId) > 0;
+
+
+            if (!typeExists || !cityExists)
+                throw new ArgumentException("RiskAreaTypeId ou CityId inválido");
+
+            var entity = new RiskArea
+            {
+                Name           = dto.Name,
+                RiskAreaTypeId = dto.RiskAreaTypeId,
+                CityId         = dto.CityId
+            };
+
+            _context.RiskAreas.Add(entity);
+            await _context.SaveChangesAsync();
+
+            return ToDto(entity);
+        }
+
+        public async Task<bool> UpdateAsync(int id, UpdateRiskAreaDto dto)
+        {
+            var entity = await _context.RiskAreas.FindAsync(id);
+            if (entity is null) 
+                return false;
+
+            entity.Name           = dto.Name;
+            entity.RiskAreaTypeId = dto.RiskAreaTypeId;
+
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
+        public async Task<bool> DeleteAsync(int id)
+        {
+            var entity = await _context.RiskAreas.FindAsync(id);
+            if (entity is null) 
+                return false;
+
+            _context.RiskAreas.Remove(entity);
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
+        private static RiskAreaDto ToDto(RiskArea r) => new()
+        {
+            Id            = r.Id,
+            Name          = r.Name,
+            RiskAreaTypeId = r.RiskAreaTypeId
         };
-
-        _context.RiskAreas.Add(entity);
-        await _context.SaveChangesAsync();
-
-        return ToDto(entity);
     }
-
-    public async Task<bool> UpdateAsync(int id, UpdateRiskAreaDto dto)
-    {
-        var entity = await _context.RiskAreas.FindAsync(id);
-        if (entity is null) return false;
-
-        entity.Name           = dto.Name;
-        entity.RiskAreaTypeId = dto.RiskAreaTypeId;
-
-        await _context.SaveChangesAsync();
-        return true;
-    }
-
-    public async Task<bool> DeleteAsync(int id)
-    {
-        var entity = await _context.RiskAreas.FindAsync(id);
-        if (entity is null) return false;
-
-        _context.RiskAreas.Remove(entity);
-        await _context.SaveChangesAsync();
-        return true;
-    }
-
-
-    private static RiskAreaDto ToDto(RiskArea r) => new()
-    {
-        Id            = r.Id,
-        Name          = r.Name,
-        RiskAreaTypeId = r.RiskAreaTypeId
-    };
 }

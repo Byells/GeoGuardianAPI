@@ -6,4 +6,5 @@ public class Country
     public string Name   { get; set; } = null!;
 
     public ICollection<State> States { get; set; } = [];
+    public ICollection<Address> Addresses { get; set; } = [];
 }

@@ -21,9 +21,9 @@ namespace GeoGuardian.Dtos.Sensor
         public int SensorModelId { get; set; }
 
         /// <summary>
-        /// Status inicial do sensor (ex.: “ACTIVE”, “INACTIVE”). Opcional:
-        /// se não for enviado, será considerado “ACTIVE” por padrão.
+        /// Status inicial do sensor (ex.: “ACTIVE”, “INACTIVE”).
         /// </summary>
-        public string? Status { get; set; } = "ACTIVE";
+        public string? Status { get; set; }
+
     }
 }

@@ -42,9 +42,10 @@ public class UserService : IUserService
         {
             FullName   = dto.FullName,
             Email      = dto.Email,
-            Password   = Hash(dto.Password),
+            Password   = BCrypt.Net.BCrypt.HashPassword(dto.Password),
             UserTypeId = dto.UserTypeId
         };
+
         _ctx.Users.Add(entity);
         await _ctx.SaveChangesAsync();
         return ToDto(entity);

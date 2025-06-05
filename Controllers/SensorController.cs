@@ -1,5 +1,6 @@
 ﻿using GeoGuardian.Dtos.Sensor;
 using GeoGuardian.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace GeoGuardian.Controllers;
@@ -18,10 +19,12 @@ public class SensorController : ControllerBase
     }
 
 
+    [Authorize]
     [HttpGet]
     public async Task<ActionResult<IEnumerable<SensorDto>>> Get() =>
         Ok(await _service.GetAllAsync());
 
+    [Authorize]
     [HttpGet("{id:int}")]
     public async Task<ActionResult<SensorDto>> Get(int id)
     {
@@ -29,36 +32,30 @@ public class SensorController : ControllerBase
         return dto is null ? NotFound() : Ok(dto);
     }
 
-    [HttpPost]
-    [Route("admin/{userId:int}")]
-    public async Task<ActionResult<SensorDto>> Post(int userId, [FromBody] CreateSensorDto dto)
+    [Authorize(Roles = "1")]
+    [HttpPost("admin")]
+    public async Task<ActionResult<SensorDto>> Post([FromBody] CreateSensorDto dto)
     {
-        if (!await _userService.IsAdminAsync(userId))
-            return Unauthorized("User is not authorized.");
-
         if (!ModelState.IsValid) return BadRequest(ModelState);
-
         var created = await _service.CreateAsync(dto);
         return CreatedAtAction(nameof(Get), new { id = created.Id }, created);
     }
 
 
-    [HttpPut("admin/{userId:int}/{id:int}")]
-    public async Task<IActionResult> Put(int userId, int id, [FromBody] UpdateSensorDto dto)
+    [Authorize(Roles = "1")]
+    [HttpPut("admin/{id:int}")]
+    public async Task<IActionResult> Put(int id, [FromBody] UpdateSensorDto dto)
     {
-        if (!await _userService.IsAdminAsync(userId))
-            return Unauthorized("User is not authorized.");
 
         if (!ModelState.IsValid) return BadRequest(ModelState);
         var ok = await _service.UpdateAsync(id, dto);
         return ok ? NoContent() : NotFound();
     }
 
-    [HttpDelete("admin/{userId:int}/{id:int}")]
-    public async Task<IActionResult> Delete(int userId, int id)
+    [Authorize(Roles = "1")]
+    [HttpDelete("admin/{id:int}")]
+    public async Task<IActionResult> Delete(int id)
     {
-        if (!await _userService.IsAdminAsync(userId))
-            return Unauthorized("User is not authorized.");
 
         var ok = await _service.DeleteAsync(id);
         return ok ? NoContent() : NotFound();

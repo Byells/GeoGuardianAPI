@@ -7,4 +7,7 @@ public class UserDto
     public string Email    { get; set; } = null!;
     public DateTime Created { get; set; }
     public int    UserTypeId { get; set; }
+    
+    public string UserType { get; set; } = string.Empty;
+
 }

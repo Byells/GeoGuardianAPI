@@ -1,5 +1,6 @@
 ﻿// 1. LOCATION CONTROLLER
 using GeoGuardian.Data;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -11,6 +12,7 @@ public class LocationController : ControllerBase
     private readonly GeoGuardianContext _ctx;
     public LocationController(GeoGuardianContext ctx) => _ctx = ctx;
 
+    [Authorize]
     [HttpGet("countries")]
     public async Task<ActionResult<IEnumerable<object>>> GetCountries()
     {
@@ -20,6 +22,7 @@ public class LocationController : ControllerBase
         return Ok(list);
     }
 
+    [Authorize]
     [HttpGet("states")]
     public async Task<ActionResult<IEnumerable<object>>> GetStates()
     {
@@ -29,6 +32,7 @@ public class LocationController : ControllerBase
         return Ok(list);
     }
 
+    [Authorize]
     [HttpGet("cities")]
     public async Task<ActionResult<IEnumerable<object>>> GetCities()
     {

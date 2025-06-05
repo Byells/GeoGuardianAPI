@@ -1,5 +1,6 @@
 ﻿using GeoGuardian.Dtos.Alert;
 using GeoGuardian.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace GeoGuardian.Controllers;
@@ -11,10 +12,12 @@ public class AlertController : ControllerBase
     private readonly IAlertService _svc;
     public AlertController(IAlertService svc) => _svc = svc;
 
+    [Authorize]
     [HttpGet]
     public async Task<ActionResult<IEnumerable<AlertDto>>> Get() =>
         Ok(await _svc.GetAllAsync());
 
+    [Authorize]
     [HttpGet("{id:int}")]
     public async Task<ActionResult<AlertDto>> Get(int id)
     {
@@ -22,6 +25,7 @@ public class AlertController : ControllerBase
         return dto is null ? NotFound() : Ok(dto);
     }
 
+    [Authorize]
     [HttpPost]
     public async Task<ActionResult<AlertDto>> Post([FromBody] CreateAlertDto dto)
     {
@@ -30,6 +34,7 @@ public class AlertController : ControllerBase
         return CreatedAtAction(nameof(Get), new { id = created.Id }, created);
     }
 
+    [Authorize]
     [HttpPut("{id:int}")]
     public async Task<IActionResult> Put(int id, [FromBody] UpdateAlertDto dto)
     {
@@ -38,6 +43,7 @@ public class AlertController : ControllerBase
         return ok ? NoContent() : NotFound();
     }
 
+    [Authorize]
     [HttpDelete("{id:int}")]
     public async Task<IActionResult> Delete(int id)
     {

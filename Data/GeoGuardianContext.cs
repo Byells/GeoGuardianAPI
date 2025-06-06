@@ -143,6 +143,18 @@ namespace GeoGuardian.Data
                 .HasOne(ua => ua.Alert)
                 .WithMany(a => a.UserAlerts)
                 .HasForeignKey(ua => ua.AlertId);
+            
+            mb.Entity<Alert>()
+                .HasOne(a => a.Address)
+                .WithMany(ad => ad.Alerts)
+                .HasForeignKey(a => a.AddressId);
+            
+            mb.Entity<Alert>()
+                .HasOne(a => a.User)
+                .WithMany(u => u.Alerts)
+                .HasForeignKey(a => a.UserId);
+
+
 
             SeedData.Configure(mb);
         }

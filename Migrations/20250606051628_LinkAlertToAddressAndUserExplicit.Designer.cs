@@ -3,6 +3,7 @@ using System;
 using GeoGuardian.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Oracle.EntityFrameworkCore.Metadata;
 
@@ -11,9 +12,11 @@ using Oracle.EntityFrameworkCore.Metadata;
 namespace GeoGuardian.Migrations
 {
     [DbContext(typeof(GeoGuardianContext))]
-    partial class GeoGuardianContextModelSnapshot : ModelSnapshot
+    [Migration("20250606051628_LinkAlertToAddressAndUserExplicit")]
+    partial class LinkAlertToAddressAndUserExplicit
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -39,7 +42,7 @@ namespace GeoGuardian.Migrations
                     b.Property<DateTime>("Date")
                         .HasColumnType("TIMESTAMP(7)");
 
-                    b.Property<int?>("RiskAreaId")
+                    b.Property<int>("RiskAreaId")
                         .HasColumnType("NUMBER(10)");
 
                     b.Property<int>("RiskLevel")
@@ -1201,7 +1204,9 @@ namespace GeoGuardian.Migrations
 
                     b.HasOne("GeoGuardian.Entities.RiskArea", "RiskArea")
                         .WithMany("Alerts")
-                        .HasForeignKey("RiskAreaId");
+                        .HasForeignKey("RiskAreaId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.HasOne("GeoGuardian.Entities.User", "User")
                         .WithMany("Alerts")

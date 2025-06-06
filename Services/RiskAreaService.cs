@@ -32,11 +32,14 @@ namespace GeoGuardian.Services
         public async Task<RiskAreaDto> CreateAsync(CreateRiskAreaDto dto)
         {
             var typeExists = await _context.RiskAreaTypes
-                .CountAsync(rt => rt.RiskAreaTypeId == dto.RiskAreaTypeId) > 0;
+                .Where(rt => rt.RiskAreaTypeId == dto.RiskAreaTypeId)
+                .Select(rt => 1)
+                .FirstOrDefaultAsync() == 1;
 
             var cityExists = await _context.Cities
-                .CountAsync(c => c.CityId == dto.CityId) > 0;
-
+                .Where(c => c.CityId == dto.CityId)
+                .Select(c => 1)
+                .FirstOrDefaultAsync() == 1;
 
             if (!typeExists || !cityExists)
                 throw new ArgumentException("RiskAreaTypeId ou CityId inválido");
@@ -51,13 +54,15 @@ namespace GeoGuardian.Services
             _context.RiskAreas.Add(entity);
             await _context.SaveChangesAsync();
 
+            await AtualizarAlertasParaCidade(dto.CityId);
+
             return ToDto(entity);
         }
 
         public async Task<bool> UpdateAsync(int id, UpdateRiskAreaDto dto)
         {
             var entity = await _context.RiskAreas.FindAsync(id);
-            if (entity is null) 
+            if (entity is null)
                 return false;
 
             entity.Name           = dto.Name;
@@ -70,18 +75,49 @@ namespace GeoGuardian.Services
         public async Task<bool> DeleteAsync(int id)
         {
             var entity = await _context.RiskAreas.FindAsync(id);
-            if (entity is null) 
+            if (entity is null)
                 return false;
+
+            int cityId = entity.CityId;
+
+            await AtualizarAlertasParaCidade(cityId, entity.Id);
 
             _context.RiskAreas.Remove(entity);
             await _context.SaveChangesAsync();
+
             return true;
+        }
+
+        private async Task AtualizarAlertasParaCidade(int cityId, int? riskAreaId = null)
+        {
+            var alerts = await _context.Alerts
+                .Include(a => a.Address)
+                .Where(a => a.Address.CityId == cityId)
+                .ToListAsync();
+
+            if (riskAreaId != null)
+            {
+                foreach (var alert in alerts)
+                {
+                    if (alert.RiskAreaId == riskAreaId)
+                        alert.RiskAreaId = null;
+                }
+            }
+            else
+            {
+                var novaArea = await _context.RiskAreas.FirstOrDefaultAsync(r => r.CityId == cityId);
+
+                foreach (var alert in alerts)
+                    alert.RiskAreaId = novaArea?.Id;
+            }
+
+            await _context.SaveChangesAsync();
         }
 
         private static RiskAreaDto ToDto(RiskArea r) => new()
         {
-            Id            = r.Id,
-            Name          = r.Name,
+            Id             = r.Id,
+            Name           = r.Name,
             RiskAreaTypeId = r.RiskAreaTypeId
         };
     }

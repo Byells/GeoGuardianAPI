@@ -2,6 +2,7 @@
 using GeoGuardian.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace GeoGuardian.Controllers;
 
@@ -32,11 +33,12 @@ public class RiskAreaController : ControllerBase
     }
 
     [Authorize(Roles = "1")]
-    [HttpPost("admin/{userId:int}")]
+    [HttpPost("admin")]
     public async Task<ActionResult<RiskAreaDto>> Post([FromBody] CreateRiskAreaDto dto)
     {
-
         if (!ModelState.IsValid) return BadRequest(ModelState);
+
+        var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
 
         var created = await _service.CreateAsync(dto);
         return CreatedAtAction(nameof(Get), new { id = created.Id }, created);
@@ -56,8 +58,6 @@ public class RiskAreaController : ControllerBase
     [HttpDelete("admin/{id:int}")]
     public async Task<IActionResult> Delete(int id)
     {
-
-
         var ok = await _service.DeleteAsync(id);
         return ok ? NoContent() : NotFound();
     }

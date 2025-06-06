@@ -9,7 +9,7 @@
         public int    CityId       { get; set; }  
         public string Neighborhood { get; set; } = null!;
         public string StreetName   { get; set; } = null!;
-        public string Number       { get; set; } = null!;  // ← número da residência
+        public string Number       { get; set; } = null!;  
         public string? Complement  { get; set; }
         public decimal? Latitude   { get; set; }
         public decimal? Longitude  { get; set; }
@@ -18,5 +18,7 @@
         public Country? Country  { get; set; }
         public State?   State    { get; set; }
         public City?    City     { get; set; }
+        public ICollection<Alert> Alerts { get; set; } = new List<Alert>();
+
     }
 }

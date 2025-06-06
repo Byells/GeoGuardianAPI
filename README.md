@@ -107,19 +107,28 @@ A maioria das rotas requer autenticação JWT. Para acessar rotas protegidas no 
 
 - `DELETE /{addressId}` → Remove um endereço
 
+- `POST /api/users/me/addresses` → Cria um endereço novo ligado diretamente ao usuário
 
-> ⚠️ Campos obrigatórios: `StreetName`, `Neighborhood`, `Number`, `Latitude`, `Longitude`, além dos `CountryId`, `StateId` e `CityId` válidos no banco.
+- `PUT /api/users/me/addresses/{id}` → edita um endereço ligado diretamente ao usuário
 
-### 📌 Países, Estados e Cidades
-
-- `/api/countries` → `GET` para listar todos os países
-
-- `/api/states?countryId=X` → `GET` para listar os estados de um país
-
-- `/api/cities?stateId=X` → `GET` para listar as cidades de um estado
+- `DELETE /api/users/me/addresses/{id}` → Deleta um endereço ligado diretamente ao usuário
 
 
-> 🔄 Esses dados são úteis no cadastro de endereço. Os filtros por `countryId` e `stateId` são obrigatórios para garantir a consistência dos dados.
+
+> ⚠️ Campos obrigatórios: `StreetName`, `Neighborhood`, `Number`, além dos `CountryId`, `StateId` e `CityId` válidos no banco.
+
+### 🌍 Location
+
+- `GET /api/location/countries`
+
+- `GET /api/location/states`
+
+- `GET /api/location/cities`
+
+
+
+
+> 🔄 Esses dados são úteis no cadastro de endereço. Eles mostram os países, estados e cidades cadastrados no banco.
 
 ### 🧭 Tipos de Área de Risco
 
@@ -220,6 +229,75 @@ A maioria das rotas requer autenticação JWT. Para acessar rotas protegidas no 
 
 
 > 🔐 Todas essas rotas requerem autenticação. Se o token estiver ausente ou inválido, a API retorna `401 Unauthorized`.
+
+---
+
+## 🧪 Exemplos de Testes
+
+### 🔑 Autenticar e copiar o token
+> POST /api/auth/login 
+```json
+{
+  "userMail": "leo@fiap.com",
+  "password": "Leo123"
+}
+```
+
+### ➕👤 Criar usuário
+> POST /api/user
+```json
+{
+  "userName": "Leonardo",
+  "userMail": "leo@fiap.com",
+  "password": "Leo123",
+  "userTypeId": 1
+}
+```
+
+### ➕🏠 Criar endereço
+> POST /api/users/me/addresses
+```json
+{
+  "countryId": 1,
+  "stateId": 1,
+  "cityId": 3,
+  "neighborhood": "Centro",
+  "streetName": "Rua das Águas",
+  "number": "123",
+  "complement": "Próximo ao rio"
+}
+```
+
+### ➕⚠️ Criar área de risco
+> POST /api/riskarea/admin
+```json
+{
+  "name": "Enchente Zona Norte",
+  "riskAreaTypeId": 1,
+  "cityId": 3
+}
+```
+
+###  ➕📡️ Criar sensor
+> POST /api/sensor/admin
+```json
+{
+  "name": "Sensor Rio Tietê",
+  "riskAreaId": 5
+}
+```
+
+### ➕🔔 Criar alerta
+> POST /api/alert
+```json
+{
+  "riskLevel": 3,
+  "alertTypeId": 2,
+  "addressId": 10
+}
+```
+### ➡️ 'addressId' é o id do endereço criado, que você deseja colocar o alerta:
+
 
 ---
 

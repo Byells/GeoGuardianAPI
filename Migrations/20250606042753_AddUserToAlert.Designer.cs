@@ -3,6 +3,7 @@ using System;
 using GeoGuardian.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Oracle.EntityFrameworkCore.Metadata;
 
@@ -11,9 +12,11 @@ using Oracle.EntityFrameworkCore.Metadata;
 namespace GeoGuardian.Migrations
 {
     [DbContext(typeof(GeoGuardianContext))]
-    partial class GeoGuardianContextModelSnapshot : ModelSnapshot
+    [Migration("20250606042753_AddUserToAlert")]
+    partial class AddUserToAlert
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -21,45 +24,6 @@ namespace GeoGuardian.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             OracleModelBuilderExtensions.UseIdentityColumns(modelBuilder);
-
-            modelBuilder.Entity("Alert", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("NUMBER(10)");
-
-                    OraclePropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("AddressId")
-                        .HasColumnType("NUMBER(10)");
-
-                    b.Property<int>("AlertTypeId")
-                        .HasColumnType("NUMBER(10)");
-
-                    b.Property<DateTime>("Date")
-                        .HasColumnType("TIMESTAMP(7)");
-
-                    b.Property<int?>("RiskAreaId")
-                        .HasColumnType("NUMBER(10)");
-
-                    b.Property<int>("RiskLevel")
-                        .HasColumnType("NUMBER(10)");
-
-                    b.Property<int>("UserId")
-                        .HasColumnType("NUMBER(10)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("AddressId");
-
-                    b.HasIndex("AlertTypeId");
-
-                    b.HasIndex("RiskAreaId");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("Alerts");
-                });
 
             modelBuilder.Entity("GeoGuardian.Entities.Address", b =>
                 {
@@ -133,6 +97,40 @@ namespace GeoGuardian.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("Addresses");
+                });
+
+            modelBuilder.Entity("GeoGuardian.Entities.Alert", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("NUMBER(10)");
+
+                    OraclePropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("AlertTypeId")
+                        .HasColumnType("NUMBER(10)");
+
+                    b.Property<DateTime>("Date")
+                        .HasColumnType("TIMESTAMP(7)");
+
+                    b.Property<int>("RiskAreaId")
+                        .HasColumnType("NUMBER(10)");
+
+                    b.Property<int>("RiskLevel")
+                        .HasColumnType("NUMBER(10)");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("NUMBER(10)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AlertTypeId");
+
+                    b.HasIndex("RiskAreaId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("Alerts");
                 });
 
             modelBuilder.Entity("GeoGuardian.Entities.AlertType", b =>
@@ -1185,39 +1183,6 @@ namespace GeoGuardian.Migrations
                         });
                 });
 
-            modelBuilder.Entity("Alert", b =>
-                {
-                    b.HasOne("GeoGuardian.Entities.Address", "Address")
-                        .WithMany("Alerts")
-                        .HasForeignKey("AddressId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("GeoGuardian.Entities.AlertType", "AlertType")
-                        .WithMany("Alerts")
-                        .HasForeignKey("AlertTypeId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("GeoGuardian.Entities.RiskArea", "RiskArea")
-                        .WithMany("Alerts")
-                        .HasForeignKey("RiskAreaId");
-
-                    b.HasOne("GeoGuardian.Entities.User", "User")
-                        .WithMany("Alerts")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Address");
-
-                    b.Navigation("AlertType");
-
-                    b.Navigation("RiskArea");
-
-                    b.Navigation("User");
-                });
-
             modelBuilder.Entity("GeoGuardian.Entities.Address", b =>
                 {
                     b.HasOne("GeoGuardian.Entities.City", null)
@@ -1265,6 +1230,33 @@ namespace GeoGuardian.Migrations
                     b.Navigation("Country");
 
                     b.Navigation("State");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("GeoGuardian.Entities.Alert", b =>
+                {
+                    b.HasOne("GeoGuardian.Entities.AlertType", "AlertType")
+                        .WithMany("Alerts")
+                        .HasForeignKey("AlertTypeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("GeoGuardian.Entities.RiskArea", "RiskArea")
+                        .WithMany("Alerts")
+                        .HasForeignKey("RiskAreaId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("GeoGuardian.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("AlertType");
+
+                    b.Navigation("RiskArea");
 
                     b.Navigation("User");
                 });
@@ -1377,7 +1369,7 @@ namespace GeoGuardian.Migrations
 
             modelBuilder.Entity("GeoGuardian.Entities.UserAlert", b =>
                 {
-                    b.HasOne("Alert", "Alert")
+                    b.HasOne("GeoGuardian.Entities.Alert", "Alert")
                         .WithMany("UserAlerts")
                         .HasForeignKey("AlertId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -1394,14 +1386,9 @@ namespace GeoGuardian.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("Alert", b =>
+            modelBuilder.Entity("GeoGuardian.Entities.Alert", b =>
                 {
                     b.Navigation("UserAlerts");
-                });
-
-            modelBuilder.Entity("GeoGuardian.Entities.Address", b =>
-                {
-                    b.Navigation("Alerts");
                 });
 
             modelBuilder.Entity("GeoGuardian.Entities.AlertType", b =>
@@ -1465,8 +1452,6 @@ namespace GeoGuardian.Migrations
             modelBuilder.Entity("GeoGuardian.Entities.User", b =>
                 {
                     b.Navigation("Addresses");
-
-                    b.Navigation("Alerts");
 
                     b.Navigation("UserAlerts");
                 });

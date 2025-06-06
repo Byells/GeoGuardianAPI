@@ -13,4 +13,7 @@ public class User
 
     public ICollection<Address>   Addresses   { get; set; } = [];
     public ICollection<UserAlert> UserAlerts  { get; set; } = [];
+    
+    public ICollection<Alert> Alerts { get; set; } = [];
+
 }

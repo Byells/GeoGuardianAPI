@@ -11,6 +11,12 @@ using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Carregar configurações específicas para desenvolvimento
+if (builder.Environment.IsDevelopment())
+{
+    builder.Configuration.AddJsonFile("appsettings.Development.json", optional: false, reloadOnChange: true);
+}
+
 builder.Services.AddControllers();
 
 builder.Services.AddEndpointsApiExplorer();
@@ -29,7 +35,8 @@ builder.Services.AddSwaggerGen(c =>
         Version     = "v1",
         Description = "API REST do GeoGuardian para monitoramento de enchentes, deslizamentos e rompimento de barragens."
     });
-    
+
+    // Configuração de segurança para o Swagger (autenticação com JWT)
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
         Name = "Authorization",
@@ -54,17 +61,16 @@ builder.Services.AddSwaggerGen(c =>
             Array.Empty<string>()
         }
     });
-
 });
 
-
+// Configuração do contexto de banco de dados
 builder.Services.AddDbContext<GeoGuardianContext>(opt =>
 {
-  
     var connectionString = Environment.GetEnvironmentVariable("ORACLE_CONNECTION_STRING") ?? builder.Configuration.GetConnectionString("Oracle");
     opt.UseOracle(connectionString);
 });
 
+// Adicionar serviços
 builder.Services.AddScoped<IRiskAreaService, RiskAreaService>();
 builder.Services.AddScoped<ISensorService, SensorService>();
 builder.Services.AddScoped<IAddressService, AddressService>();
@@ -74,6 +80,7 @@ builder.Services.AddScoped<IAlertService, AlertService>();
 builder.Services.AddScoped<JwtService>();
 builder.Services.AddScoped<AuthService>();
 
+// Configuração do CORS para permitir qualquer origem (útil para Swagger)
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", policy =>
@@ -82,9 +89,8 @@ builder.Services.AddCors(options =>
               .AllowAnyMethod());
 });
 
-
+// Configuração do JWT
 var jwtSecretKey = Environment.GetEnvironmentVariable("JWT_SECRET_KEY") ?? builder.Configuration["JwtSettings:SecretKey"];
-
 
 if (string.IsNullOrEmpty(jwtSecretKey))
 {
@@ -100,39 +106,41 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         {
             ValidateIssuer           = true,
             ValidIssuer              = builder.Configuration["JwtSettings:Issuer"],
-
             ValidateAudience         = true,
             ValidAudience            = builder.Configuration["JwtSettings:Audience"],
-
             ValidateIssuerSigningKey = true,
-            IssuerSigningKey         = new SymmetricSecurityKey(jwtKeyBytes), // Use a nova variável jwtKeyBytes
-
+            IssuerSigningKey         = new SymmetricSecurityKey(jwtKeyBytes),
             ValidateLifetime         = true
         };
-        
-        
     });
 
-var port = Environment.GetEnvironmentVariable("PORT") ?? "8080";
+// Configuração da porta - pode ser ajustada por ambiente local ou variável de ambiente
+var port = builder.Configuration["Port"] ?? Environment.GetEnvironmentVariable("PORT") ?? "8081"; 
 builder.WebHost.UseUrls($"http://*:{port}");
 
 var app = builder.Build();
 
+// Redirecionamento automático para o Swagger
+app.MapGet("/8081", () => Results.Redirect("/swagger"));
+
+// Aplicar middleware de exceção global
 app.UseGlobalException();
 
-if (app.Environment.IsDevelopment())
+// Configuração do Swagger (agora carregado em todos os ambientes)
+app.UseSwagger();
+app.UseSwaggerUI(c =>
 {
-    app.UseSwagger();
-    app.UseSwaggerUI(c =>
-    {
-        c.SwaggerEndpoint("/swagger/v1/swagger.json", "GeoGuardian v1");
-    });
-}
+    // Certifique-se de que o Swagger está usando o caminho correto
+    c.SwaggerEndpoint($"/swagger/v1/swagger.json", "GeoGuardian v1");
+});
 
+// Segurança
 app.UseHttpsRedirection();
-
 app.UseAuthentication();
 app.UseAuthorization();
 
+// Mapear os controladores
 app.MapControllers();
+
+// Iniciar a aplicação
 app.Run();

@@ -57,8 +57,13 @@ builder.Services.AddSwaggerGen(c =>
 
 });
 
+
 builder.Services.AddDbContext<GeoGuardianContext>(opt =>
-    opt.UseOracle(builder.Configuration.GetConnectionString("Oracle")));
+{
+  
+    var connectionString = Environment.GetEnvironmentVariable("ORACLE_CONNECTION_STRING") ?? builder.Configuration.GetConnectionString("Oracle");
+    opt.UseOracle(connectionString);
+});
 
 builder.Services.AddScoped<IRiskAreaService, RiskAreaService>();
 builder.Services.AddScoped<ISensorService, SensorService>();
@@ -77,7 +82,16 @@ builder.Services.AddCors(options =>
               .AllowAnyMethod());
 });
 
-var jwtKey = Encoding.ASCII.GetBytes(builder.Configuration["JwtSettings:SecretKey"]!);
+
+var jwtSecretKey = Environment.GetEnvironmentVariable("JWT_SECRET_KEY") ?? builder.Configuration["JwtSettings:SecretKey"];
+
+
+if (string.IsNullOrEmpty(jwtSecretKey))
+{
+    throw new InvalidOperationException("JWT Secret Key is not configured. Please set the 'JWT_SECRET_KEY' environment variable or 'JwtSettings:SecretKey' in appsettings.");
+}
+
+var jwtKeyBytes = Encoding.ASCII.GetBytes(jwtSecretKey);
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
@@ -91,7 +105,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidAudience            = builder.Configuration["JwtSettings:Audience"],
 
             ValidateIssuerSigningKey = true,
-            IssuerSigningKey         = new SymmetricSecurityKey(jwtKey),
+            IssuerSigningKey         = new SymmetricSecurityKey(jwtKeyBytes), // Use a nova variável jwtKeyBytes
 
             ValidateLifetime         = true
         };

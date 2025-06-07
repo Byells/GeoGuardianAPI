@@ -92,6 +92,9 @@ builder.Services.AddCors(options =>
 // Configuração do JWT
 var jwtSecretKey = Environment.GetEnvironmentVariable("JWT_SECRET_KEY") ?? builder.Configuration["JwtSettings:SecretKey"];
 
+Console.WriteLine($"DEBUG_JWT_KEY_READ: {jwtSecretKey?.Substring(0, Math.Min(jwtSecretKey.Length, 10)) ?? "NULL/EMPTY"}...");
+
+
 if (string.IsNullOrEmpty(jwtSecretKey))
 {
     throw new InvalidOperationException("JWT Secret Key is not configured. Please set the 'JWT_SECRET_KEY' environment variable or 'JwtSettings:SecretKey' in appsettings.");

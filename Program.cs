@@ -99,7 +99,7 @@ if (string.IsNullOrEmpty(jwtSecretKey))
     throw new InvalidOperationException("JWT Secret Key is not configured. Please set the 'JWT_SECRET_KEY' environment variable or 'JwtSettings:SecretKey' in appsettings.");
 }
 
-var jwtKeyBytes = Convert.FromBase64String(jwtSecretKey);
+var jwtKeyBytes = Convert.FromHexString(jwtSecretKey);
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>

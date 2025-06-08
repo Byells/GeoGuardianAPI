@@ -14,7 +14,8 @@ public class JwtService
 
     public string GenerateToken(User user)
     {
-        var key     = Encoding.ASCII.GetBytes(_config["JwtSettings:SecretKey"]!);
+        var secretKeyString = _config["JwtSettings:SecretKey"]!;
+        var key = Convert.FromBase64String(secretKeyString.Trim());
         var claims  = new[]
         {
             new Claim(ClaimTypes.NameIdentifier, user.UserId.ToString()),

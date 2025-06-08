@@ -1,5 +1,6 @@
 using System.Reflection;
 using System.Text;
+using System.Security.Cryptography; 
 using GeoGuardian.Data;
 using GeoGuardian.Interfaces;
 using GeoGuardian.Middlewares;
@@ -50,10 +51,10 @@ builder.Services.AddSwaggerGen(c =>
         {
             new OpenApiSecurityScheme
             {
-                Reference = new OpenApiReference
+                Reference = new OpenApiReference 
                 {
-                    Type = ReferenceType.SecurityScheme,
-                    Id = "Bearer"
+                    Type = ReferenceType.SecurityScheme, 
+                    Id = "Bearer" 
                 }
             },
             Array.Empty<string>()
@@ -84,15 +85,28 @@ builder.Services.AddCors(options =>
               .AllowAnyMethod());
 });
 
-
-var jwtSecretKey = Environment.GetEnvironmentVariable("JWT_SECRET_KEY") ?? builder.Configuration["JwtSettings:SecretKey"];
+var jwtSecretKey = builder.Configuration["JwtSettings:SecretKey"];
 
 if (string.IsNullOrEmpty(jwtSecretKey))
 {
-    throw new InvalidOperationException("JWT Secret Key is not configured. Please set the 'JWT_SECRET_KEY' environment variable or 'JwtSettings:SecretKey' in appsettings.");
+    throw new InvalidOperationException("JWT Secret Key is not configured. Please set 'JwtSettings:SecretKey' in your appsettings.Development.json (local) or configure as a Secret File (production).");
 }
 
-var jwtKeyBytes = Encoding.ASCII.GetBytes(jwtSecretKey);
+byte[] jwtKeyBytes;
+try
+{
+    jwtKeyBytes = Convert.FromBase64String(jwtSecretKey);
+    Console.WriteLine($"DEBUG: JWT Secret Key from config (length: {jwtSecretKey.Length} chars). Converted to {jwtKeyBytes.Length * 8} bits.");
+    if (jwtKeyBytes.Length * 8 < 256)
+    {
+        Console.WriteLine($"WARNING: Configured JWT Key is less than 256 bits ({jwtKeyBytes.Length * 8} bits). This might cause issues for HS256.");
+    }
+}
+catch (FormatException ex)
+{
+    throw new InvalidOperationException($"JWT Secret Key in appsettings is not a valid Base64 string: {ex.Message}", ex);
+}
+
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
@@ -109,12 +123,10 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 
-var port = builder.Configuration["Port"] ?? Environment.GetEnvironmentVariable("PORT") ?? "8081"; 
+var port = builder.Configuration["Port"] ?? Environment.GetEnvironmentVariable("PORT") ?? "8081";
 builder.WebHost.UseUrls($"http://*:{port}");
 
 var app = builder.Build();
-
-
 
 app.UseGlobalException();
 
@@ -124,9 +136,9 @@ app.UseSwaggerUI(c =>
     c.SwaggerEndpoint($"/swagger/v1/swagger.json", "GeoGuardian v1");
 });
 
-app.UseCors("AllowAll"); 
+app.UseCors("AllowAll");
 
-app.UseHttpsRedirection();
+app.UseHttpsRedirection(); 
 app.UseAuthentication();
 app.UseAuthorization();
 

@@ -10,6 +10,7 @@ obj/
 
 # Local settings
 appsettings.Development.json
+appsettings.Production.json
 
 # OS junk
 .DS_Store

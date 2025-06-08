@@ -1,5 +1,4 @@
-﻿// 1. LOCATION CONTROLLER
-using GeoGuardian.Data;
+﻿using GeoGuardian.Data;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -24,21 +23,33 @@ public class LocationController : ControllerBase
 
     [Authorize]
     [HttpGet("states")]
-    public async Task<ActionResult<IEnumerable<object>>> GetStates()
+    public async Task<ActionResult<IEnumerable<object>>> GetStates([FromQuery] int? countryId)
     {
-        var list = await _ctx.States
+        var query = _ctx.States.AsQueryable();
+
+        if (countryId.HasValue)
+            query = query.Where(s => s.CountryId == countryId.Value);
+
+        var list = await query
             .Select(s => new { s.StateId, s.Name, s.CountryId })
             .ToListAsync();
+
         return Ok(list);
     }
 
     [Authorize]
     [HttpGet("cities")]
-    public async Task<ActionResult<IEnumerable<object>>> GetCities()
+    public async Task<ActionResult<IEnumerable<object>>> GetCities([FromQuery] int? stateId)
     {
-        var list = await _ctx.Cities
+        var query = _ctx.Cities.AsQueryable();
+
+        if (stateId.HasValue)
+            query = query.Where(c => c.StateId == stateId.Value);
+
+        var list = await query
             .Select(c => new { c.CityId, c.Name, c.StateId })
             .ToListAsync();
+
         return Ok(list);
     }
 }

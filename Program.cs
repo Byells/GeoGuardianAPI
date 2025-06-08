@@ -95,7 +95,7 @@ if (string.IsNullOrEmpty(jwtSecretKey))
 byte[] jwtKeyBytes;
 try
 {
-    jwtKeyBytes = Convert.FromBase64String(jwtSecretKey);
+    jwtKeyBytes = Convert.FromBase64String(jwtSecretKey.Trim());
     Console.WriteLine($"DEBUG: JWT Secret Key from config (length: {jwtSecretKey.Length} chars). Converted to {jwtKeyBytes.Length * 8} bits.");
     if (jwtKeyBytes.Length * 8 < 256)
     {

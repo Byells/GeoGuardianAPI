@@ -3,6 +3,7 @@ using GeoGuardian.Dtos.RiskArea;
 using GeoGuardian.Entities;
 using GeoGuardian.Interfaces;
 using Microsoft.EntityFrameworkCore;
+using System.Linq; // Garante que o .Select esteja disponível para LINQ
 
 namespace GeoGuardian.Services
 {
@@ -28,7 +29,6 @@ namespace GeoGuardian.Services
 
         public async Task<RiskAreaDto?> GetByIdAsync(int id)
         {
-            
             var entity = await _context.RiskAreas
                                      .Include(ra => ra.City)
                                          .ThenInclude(c => c.State) 
@@ -130,6 +130,7 @@ namespace GeoGuardian.Services
             await _context.SaveChangesAsync();
         }
 
+        // Método ToDto atualizado com todos os IDs e Nomes
         private static RiskAreaDto ToDto(RiskArea r) => new()
         {
             Id             = r.Id,
@@ -137,7 +138,9 @@ namespace GeoGuardian.Services
             RiskAreaTypeId = r.RiskAreaTypeId,
             CityId         = r.CityId, 
             CityName       = r.City?.Name, 
+            StateId        = r.City?.StateId, // Mapeando o ID do Estado
             StateName      = r.City?.State?.Name,    
+            CountryId      = r.City?.State?.CountryId, // Mapeando o ID do País
             CountryName    = r.City?.State?.Country?.Name 
         };
     }

@@ -31,12 +31,22 @@ public class RiskAreaDto
     public string? CityName { get; set; }
 
     /// <summary>
+    /// ID do Estado ao qual a Área de Risco pertence.
+    /// </summary>
+    public int? StateId { get; set; } // <-- NOVO: ID do Estado
+
+    /// <summary>
     /// Nome do Estado ao qual a Área de Risco pertence.
     /// </summary>
-    public string? StateName { get; set; } 
+    public string? StateName { get; set; }
+
+    /// <summary>
+    /// ID do País ao qual a Área de Risco pertence.
+    /// </summary>
+    public int? CountryId { get; set; } // <-- NOVO: ID do País
 
     /// <summary>
     /// Nome do País ao qual a Área de Risco pertence.
     /// </summary>
-    public string? CountryName { get; set; } 
+    public string? CountryName { get; set; }
 }

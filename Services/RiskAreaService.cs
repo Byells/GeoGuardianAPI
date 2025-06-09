@@ -3,6 +3,7 @@ using GeoGuardian.Dtos.RiskArea;
 using GeoGuardian.Entities;
 using GeoGuardian.Interfaces;
 using Microsoft.EntityFrameworkCore;
+using System.Linq; // Garante que o .Select esteja disponível para LINQ
 
 namespace GeoGuardian.Services
 {
@@ -18,6 +19,7 @@ namespace GeoGuardian.Services
         public async Task<IEnumerable<RiskAreaDto>> GetAllAsync()
         {
             var list = await _context.RiskAreas
+                                     .Include(ra => ra.City) // <-- ADICIONADO: Carrega a cidade
                                      .AsNoTracking()
                                      .ToListAsync();
             return list.Select(ToDto);
@@ -25,7 +27,12 @@ namespace GeoGuardian.Services
 
         public async Task<RiskAreaDto?> GetByIdAsync(int id)
         {
-            var entity = await _context.RiskAreas.FindAsync(id);
+            // ALTERADO: Usar FirstOrDefaultAsync com Include em vez de FindAsync
+            // FindAsync não carrega relações (.Include)
+            var entity = await _context.RiskAreas
+                                     .Include(ra => ra.City) // <-- ADICIONADO: Carrega a cidade
+                                     .FirstOrDefaultAsync(ra => ra.Id == id);
+            
             return entity is null ? null : ToDto(entity);
         }
 
@@ -56,7 +63,12 @@ namespace GeoGuardian.Services
 
             await AtualizarAlertasParaCidade(dto.CityId);
 
-            return ToDto(entity);
+            // <-- ADICIONADO: Recarregar a entidade com a cidade para o DTO de retorno
+            var createdEntityWithCity = await _context.RiskAreas
+                                     .Include(ra => ra.City)
+                                     .FirstOrDefaultAsync(ra => ra.Id == entity.Id);
+
+            return ToDto(createdEntityWithCity); // <-- Usar a entidade recarregada
         }
 
         public async Task<bool> UpdateAsync(int id, UpdateRiskAreaDto dto)
@@ -65,8 +77,11 @@ namespace GeoGuardian.Services
             if (entity is null)
                 return false;
 
+            // Supondo que você queira que estas sejam atualizáveis.
+            // Se o DTO.RiskAreaTypeId/CityId for nulo, mantem o valor atual.
             entity.Name           = dto.Name;
-            entity.RiskAreaTypeId = dto.RiskAreaTypeId;
+            entity.RiskAreaTypeId = dto.RiskAreaTypeId ?? entity.RiskAreaTypeId;
+            entity.CityId         = dto.CityId ?? entity.CityId; 
 
             await _context.SaveChangesAsync();
             return true;
@@ -80,6 +95,7 @@ namespace GeoGuardian.Services
 
             int cityId = entity.CityId;
 
+            // Este método não precisa ser alterado para o nome da cidade no DTO
             await AtualizarAlertasParaCidade(cityId, entity.Id);
 
             _context.RiskAreas.Remove(entity);
@@ -114,11 +130,14 @@ namespace GeoGuardian.Services
             await _context.SaveChangesAsync();
         }
 
+        // ALTERADO: Incluindo CityId e CityName no DTO
         private static RiskAreaDto ToDto(RiskArea r) => new()
         {
             Id             = r.Id,
             Name           = r.Name,
-            RiskAreaTypeId = r.RiskAreaTypeId
+            RiskAreaTypeId = r.RiskAreaTypeId,
+            CityId         = r.CityId, // <-- ADICIONADO: Mapeando o CityId
+            CityName       = r.City?.Name // <-- ADICIONADO: Mapeando o nome da cidade (usa ?. para segurança)
         };
     }
 }
